@@ -47,6 +47,18 @@ class memtest86(object):
 
     """this class is to interact with memtest86"""
 
+    test_name = ["Test 0 [Address test, walking ones, 1 CPU]",
+                 "Test 1 [Address test, own address, 1 CPU]",
+                 "Test 2 [Address test, own address]",
+                 "Test 3 [Moving inversions, ones & zeroes]",
+                 "Test 4 [Moving inversions, 8-bit pattern]",
+                 "Test 5 [Moving inversions, random pattern]",
+                 "Test 6 [Block move, 64-byte blocks]",
+                 "Test 7 [Moving inversions, 32-bit pattern]",
+                 "Test 8 [Random number sequence]",
+                 "Test 9 [Modulo 20, ones & zeros]",
+                 "Test 10 [Bit fade test, two patterns, 1 CPU]"]
+
     def __init__(self, server, port):
         self.roller = None
         self.tests = set(range(11))
@@ -115,7 +127,9 @@ class memtest86(object):
             time.sleep(0.1)
 
     def restart(self, round, test_set=range(11)):
-        """restart the memtest86 from beginning"""
+        """restart the memtest86 from beginning
+           pass in test rounds and test sets
+        """
         self._config(round, test_set)
         time.sleep(1)
         self.child.send('s')
@@ -196,7 +210,12 @@ class memtest86(object):
 
     def get_current_test(self):
         """retrieve the current test item"""
-        return self.get_region(4, 30, 4, 80)
+        # we need to return the full description
+        t = self.get_region(4, 30, 4, 80)
+        for i in self.test_name:
+            if i[0:7] in t:
+                return i
+        return t
 
     def get_test_progress(self):
         """retrieve the current test progress"""

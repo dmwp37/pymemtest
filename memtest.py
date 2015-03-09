@@ -59,7 +59,7 @@ def main():
         print test.get_info()
 
         print "\nstart memory86 test"
-        test.restart(2, range(4))
+        test.restart(1)
         old_round = ""
         old_test = ""
         old_progress = ""
