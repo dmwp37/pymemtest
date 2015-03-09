@@ -206,7 +206,14 @@ class memtest86(object):
 
     def get_current_round(self):
         """retrieve the current test round"""
-        return self.get_region(12, 40, 12, 65)
+        r = self.get_region(12, 40, 12, 65)
+        if "| " in r:
+            return ""
+        if len(r) < 20:
+            return ""
+        if "Pass:     0" in r:
+            return ""
+        return r
 
     def get_current_test(self):
         """retrieve the current test item"""
@@ -215,7 +222,7 @@ class memtest86(object):
         for i in self.test_name:
             if i[0:7] in t:
                 return i
-        return t
+        return ""
 
     def get_test_progress(self):
         """retrieve the current test progress"""

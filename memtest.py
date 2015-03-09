@@ -59,7 +59,7 @@ def main():
         print test.get_info()
 
         print "\nstart memory86 test"
-        test.restart(1)
+        test.restart(1, range(4))
         old_round = ""
         old_test = ""
         old_progress = ""
@@ -68,7 +68,7 @@ def main():
         while True:
             # check test round
             r = test.get_current_round()
-            if r != old_round:
+            if r and r != old_round:
                 if "summary" in r:
                     # test finished here
                     error = int(test.get_errors())
@@ -81,7 +81,7 @@ def main():
 
             # check test item
             t = test.get_current_test()
-            if t != old_test:
+            if t and t != old_test:
                 old_test = t
                 print "\r%s" % t
 
