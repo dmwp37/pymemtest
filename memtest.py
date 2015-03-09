@@ -20,6 +20,16 @@ def exit_with_usage(exit_code=1):
     os._exit(exit_code)
 
 
+def print_test_result(summary, error):
+    print "\r----------------------------------------"
+    print summary
+    print "----------------------------------------"
+    if error != 0:
+        print "test failed! Errors: %s" % error
+    else:
+        print "test passed"
+
+
 def main():
     try:
         optlist, args = getopt.getopt(
@@ -49,30 +59,28 @@ def main():
         print test.get_info()
 
         print "\nstart memory86 test"
-        test.restart()
+        test.restart(2, range(4))
         old_round = ""
         old_test = ""
         old_progress = ""
-        while True:
-            # check errors
-            e = int(test.get_errors())
-            if e != 0:
-                print "error happened!"
-                break
+        error = 0
 
+        while True:
             # check test round
-            r = test.get_current_pass()
+            r = test.get_current_round()
             if r != old_round:
-                old_round = r
-                print "\r%s" % r
+                if "summary" in r:
+                    # test finished here
+                    error = int(test.get_errors())
+                    summary = test.get_summary()
+                    print_test_result(summary, error)
+                    break
+                else:
+                    old_round = r
+                    print "\r%s" % r
 
             # check test item
             t = test.get_current_test()
-            # check finish condition
-            if "Test 3" in t:
-                sys.stdout.write("\r")
-                break
-
             if t != old_test:
                 old_test = t
                 print "\r%s" % t
@@ -87,13 +95,6 @@ def main():
             time.sleep(0.1)
     finally:
         test.stop()
-        print "----------------------------------------"
-        print "time used: %s\n" % test.get_time()
-        error = int(test.get_errors())
-        if error != 0:
-            print "test failed! Errors: %s" % test.get_errors()
-        else:
-            print "test passed"
 
 
 if __name__ == "__main__":

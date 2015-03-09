@@ -13,6 +13,13 @@ import time
 import threading
 
 
+KEY_UP = '\x1b[A'
+KEY_DOWN = '\x1b[B'
+KEY_RIGHT = '\x1b[C'
+KEY_LEFT = '\x1b[D'
+KEY_ENTER = '\r'
+
+
 class roller (threading.Thread):
 
     """This runs a function in a loop in a thread."""
@@ -42,6 +49,7 @@ class memtest86(object):
 
     def __init__(self, server, port):
         self.roller = None
+        self.tests = set(range(11))
         self.child = pexpect.spawn('telnet %s %s' % (server, port))
         r, c = self.child.getwinsize()
         self.crt = ANSI.ANSI(r, c)
@@ -58,11 +66,21 @@ class memtest86(object):
     def start(self):
         """Start to monitor the remote memtest86"""
         # if this is a duplicate session, choose option 1 to enter
-        if 0 == self.child.expect(["Enter your option : ", "Time: "]):
+        if 0 == self.child.expect(["Enter your option : ", pexpect.TIMEOUT], timeout=3):
             print "enter duplicated session"
             self.crt.write(self.child.before)
             self.crt.write(self.child.after)
             self.child.send("1")
+
+        # start the memtest86
+        n = 0
+        while 0 != self.child.expect(["Time: ", pexpect.TIMEOUT], timeout=2):
+            self.child.send('s')
+            self.child.send(KEY_LEFT)
+            self.child.send(KEY_ENTER)
+            n += 1
+            if n > 5:
+                raise ValueError("can't start memtest86!")
 
         self.roller = roller(0.1, self._update_crt)
         self.roller.start()
@@ -75,30 +93,75 @@ class memtest86(object):
 
         self.child.terminate()
 
+    def get_summary(self):
+        """finish test return the report and reboot"""
+        self.roller.cancel()
+        time.sleep(0.2)
+        self.crt.erase_screen()
+        self.child.expect('.*', timeout=0.1)
+        self.child.send(' ')
+        self.child.expect('<Save.*>')
+        s = self.child.before
+        self.child.send('n')
+        self.child.send('x')
+        return s
+
     def refresh(self):
         """refresh the crt so that we can get full data"""
+        time.sleep(1)  # wait all the data consummed
+        self.crt.erase_screen()
         self.child.send('c0')
         while "DDR3" not in self.get_info():
             time.sleep(0.1)
 
-    def restart(self):
+    def restart(self, round, test_set=range(11)):
         """restart the memtest86 from beginning"""
-        self.child.send('c3s')
-        while "Test 0" not in self.get_current_test():
-            time.sleep(0.1)
+        self._config(round, test_set)
+        time.sleep(1)
+        self.child.send('s')
+        self.crt.erase_screen()
+        # wait till the test start
+        while True:
+            if "Pass:     1" not in self.get_current_round() or \
+               "Test 0" not in self.get_current_test():
+                time.sleep(0.1)
+            else:
+                break
 
     def reboot(self):
         """exit memtest86 and reboot the DUT"""
-        self.child.send('')
-        time.sleep(1)
+        self.child.send('c3x')
 
     def dump(self):
         """dump the crt screen"""
         print str(self.crt)
 
-    def config(self):
+    def _config(self, passes, test_set):
         """config the remote memtest86"""
-        pass
+        # enable all the cpus
+        self.child.send('c3c')
+        self.child.send(KEY_DOWN)
+        self.child.send(KEY_ENTER)
+        # set the test item
+        self.child.send('t')
+        for i in range(11):
+            # set the item
+            if i in test_set:
+                if i not in self.tests:
+                    self.child.send(KEY_ENTER)
+                    self.tests.add(i)
+            # clear the item
+            else:
+                if i in self.tests:
+                    self.child.send(KEY_ENTER)
+                    self.tests.remove(i)
+            # move to next item
+            self.child.send(KEY_DOWN)
+
+        # set the test passes
+        self.child.send(KEY_ENTER)
+        self.child.send(str(passes))
+        self.child.send(KEY_ENTER)
 
     def get_region(self, rs, cs, re, ce):
         """retrieve the strings from crt screen region"""
@@ -127,7 +190,7 @@ class memtest86(object):
         """retrieve the total available cpu number"""
         return self.get_region(9, 53, 9, 80)
 
-    def get_current_pass(self):
+    def get_current_round(self):
         """retrieve the current test round"""
         return self.get_region(12, 40, 12, 65)
 
