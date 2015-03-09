@@ -61,6 +61,7 @@ class memtest86(object):
 
     def __init__(self, server, port):
         self.roller = None
+        self._is_finish = False
         self.tests = set(range(11))
         self.child = pexpect.spawn('telnet %s %s' % (server, port))
         r, c = self.child.getwinsize()
@@ -213,6 +214,9 @@ class memtest86(object):
             return ""
         if "Pass:     0" in r:
             return ""
+        if "summary" in r:
+            self._is_finish = True
+            return ""
         return r
 
     def get_current_test(self):
@@ -231,6 +235,10 @@ class memtest86(object):
     def get_pass_progress(self):
         """retrieve the current round test progress"""
         return self.get_region(2, 30, 2, 80)
+
+    def is_finished(self):
+        """retrieve if test finished"""
+        return self._is_finish
 
 
 if __name__ == "__main__":

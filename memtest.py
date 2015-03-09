@@ -66,18 +66,18 @@ def main():
         error = 0
 
         while True:
+            # test finished here
+            if test.is_finished():
+                error = int(test.get_errors())
+                summary = test.get_summary()
+                print_test_result(summary, error)
+                break
+
             # check test round
             r = test.get_current_round()
             if r and r != old_round:
-                if "summary" in r:
-                    # test finished here
-                    error = int(test.get_errors())
-                    summary = test.get_summary()
-                    print_test_result(summary, error)
-                    break
-                else:
-                    old_round = r
-                    print "\r%s" % r
+                old_round = r
+                print "\r%s" % r
 
             # check test item
             t = test.get_current_test()
