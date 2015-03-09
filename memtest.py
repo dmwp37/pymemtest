@@ -59,7 +59,7 @@ def main():
         print test.get_info()
 
         print "\nstart memory86 test"
-        test.restart(1, range(4))
+        test.restart(1)
         old_round = ""
         old_test = ""
         old_progress = ""
@@ -86,10 +86,10 @@ def main():
                 print "\r%s" % t
 
             # check test progress
-            p = test.get_test_progress()
+            p = "%s %s" % (test.get_test_progress(), test.get_time())
             if p != old_progress:
                 old_progress = p
-                sys.stdout.write("\r    \r%s" % test.get_test_progress())
+                sys.stdout.write("\r                \r%s" % p)
                 sys.stdout.flush()
 
             time.sleep(0.1)
