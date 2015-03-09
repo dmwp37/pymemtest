@@ -92,7 +92,7 @@ def main():
                 sys.stdout.write("\r                \r%s" % p)
                 sys.stdout.flush()
 
-            time.sleep(0.1)
+            time.sleep(0.2)
     finally:
         test.stop()
 
