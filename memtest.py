@@ -24,7 +24,7 @@ def print_test_result(summary, error):
     print "\r----------------------------------------"
     print summary
     print "----------------------------------------"
-    if error != 0:
+    if error[0] != '0':
         print "test failed! Errors: %s" % error
     else:
         print "test passed"
@@ -59,16 +59,16 @@ def main():
         print test.get_info()
 
         print "\nstart memory86 test"
-        test.restart(1)
+        test.restart(1, range(8))
         old_round = ""
         old_test = ""
         old_progress = ""
-        error = 0
+        error = ''
 
         while True:
             # test finished here
             if test.is_finished():
-                error = int(test.get_errors())
+                error = test.get_errors()
                 summary = test.get_summary()
                 print_test_result(summary, error)
                 break
