@@ -12,6 +12,7 @@ import ANSI
 import time
 import threading
 
+pexpect.ANSI.DoLog = lambda fsm: None
 
 KEY_UP = '\x1b[A'
 KEY_DOWN = '\x1b[B'
